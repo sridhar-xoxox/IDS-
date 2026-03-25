@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% block title %}Prediction History — Net IDS{% endblock %}
+{% block page_title %}<i class="fas fa-clock-rotate-left"></i> Prediction History{% endblock %}
+
+{% block content %}
+<div class="history-layout">
+
+    <!-- Header controls -->
+    <div class="history-controls">
+        <div class="history-search">
+            <i class="fas fa-magnifying-glass"></i>
+            <input type="text" id="searchInput" placeholder="Search predictions, methods, severity..." oninput="filterTable()">
+        </div>
+        <div class="history-filters">
+            <select id="filterSeverity" onchange="filterTable()" class="filter-select">
+                <option value="">All Severity</option>
+                <option value="critical">Critical</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+            </select>
+            <select id="filterMethod" onchange="filterTable()" class="filter-select">
+                <option value="">All Methods</option>
+                <option value="Signature">Signature</option>
+                <option value="ML Model">ML Model</option>
+            </select>
+        </div>
+        <div class="history-actions">
+            <span class="record-count" id="recordCount">{{ records|length }} records</span>
+        </div>
+    </div>
+
+    {% if records %}
+    <!-- Table -->
+    <div class="history-table-wrap">
+        <table class="history-table" id="historyTable">
+            <thead>
+                <tr>
+                    <th onclick="sortTable(0)" class="sortable"># <i class="fas fa-sort"></i></th>
+                    <th onclick="sortTable(1)" class="sortable">Timestamp <i class="fas fa-sort"></i></th>
+                    <th onclick="sortTable(2)" class="sortable">Prediction <i class="fas fa-sort"></i></th>
+                    <th>Detection Method</th>
+                    <th onclick="sortTable(4)" class="sortable">Severity <i class="fas fa-sort"></i></th>
+                    <th>Confidence</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                {% for r in records %}
+                <tr class="history-row" data-severity="{{ r.severity }}" data-method="{{ r.detection_method }}">
+                    <td class="td-id">{{ r.id }}</td>
+                    <td class="td-mono td-time">{{ r.timestamp[:16] }}</td>
+                    <td>
+                        <span class="prediction-tag prediction-{{ r.severity }}">
+                            {{ r.prediction }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="method-tag {% if r.detection_method=='Signature' %}method-sig-tag{% else %}method-ml-tag{% endif %}">
+                            {% if r.detection_method == 'Signature' %}
+                            <i class="fas fa-fingerprint"></i>
+                            {% else %}
+                            <i class="fas fa-brain"></i>
+                            {% endif %}
+                            {{ r.detection_method }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="sev-pill sev-{{ r.severity }}">
+                            <span class="severity-dot severity-{{ r.severity }}"></span>
+                            {{ r.severity|capitalize }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if r.confidence > 0 %}
+                        <div class="confidence-bar-wrap">
+                            <div class="confidence-bar-fill" style="width:{{ r.confidence }}%;background:{% if r.confidence > 80 %}#22c55e{% elif r.confidence > 60 %}#f59e0b{% else %}#ef4444{% endif %}"></div>
+                            <span class="confidence-bar-label">{{ "%.1f"|format(r.confidence) }}%</span>
+                        </div>
+                        {% else %}
+                        <span class="td-na">Rule Match</span>
+                        {% endif %}
+                    </td>
+                    <td class="td-actions">
+                        <a href="{{ url_for('download_pdf', pred_id=r.id) }}" class="btn-icon btn-pdf" title="Download PDF">
+                            <i class="fas fa-file-pdf"></i>
+                        </a>
+                        <form method="POST" action="{{ url_for('delete_prediction', pred_id=r.id) }}" style="display:inline" onsubmit="return confirm('Delete this record?')">
+                            <button type="submit" class="btn-icon btn-delete" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-wrap" id="paginationWrap"></div>
+
+    {% else %}
+    <div class="history-empty">
+        <div class="empty-icon"><i class="fas fa-clock-rotate-left"></i></div>
+        <h3>No predictions yet</h3>
+        <p>Start analyzing network traffic flows to build your detection history.</p>
+        <a href="{{ url_for('predict') }}" class="btn-primary-sm">
+            <i class="fas fa-radar"></i> Analyze Traffic
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const ROWS_PER_PAGE = 15;
+let currentPage = 1;
+let filteredRows = [];
+
+function getAllRows() {
+    return Array.from(document.querySelectorAll('#tableBody tr'));
+}
+
+function filterTable() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const sev = document.getElementById('filterSeverity').value;
+    const method = document.getElementById('filterMethod').value;
+
+    filteredRows = getAllRows().filter(row => {
+        const text = row.textContent.toLowerCase();
+        const rowSev = row.dataset.severity;
+        const rowMethod = row.dataset.method;
+        return (!search || text.includes(search))
+            && (!sev || rowSev === sev)
+            && (!method || rowMethod === method);
+    });
+
+    currentPage = 1;
+    renderPage();
+    document.getElementById('recordCount').textContent = `${filteredRows.length} records`;
+}
+
+function renderPage() {
+    const rows = getAllRows();
+    rows.forEach(r => r.style.display = 'none');
+
+    const start = (currentPage - 1) * ROWS_PER_PAGE;
+    const end = start + ROWS_PER_PAGE;
+    filteredRows.slice(start, end).forEach(r => r.style.display = '');
+
+    buildPagination();
+}
+
+function buildPagination() {
+    const total = Math.ceil(filteredRows.length / ROWS_PER_PAGE);
+    const wrap = document.getElementById('paginationWrap');
+    if (!wrap) return;
+    if (total <= 1) { wrap.innerHTML = ''; return; }
+
+    let html = `<button onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''} class="pg-btn"><i class="fas fa-chevron-left"></i></button>`;
+    for (let i=1; i<=total; i++) {
+        html += `<button onclick="goPage(${i})" class="pg-btn ${i===currentPage?'pg-active':''}">${i}</button>`;
+    }
+    html += `<button onclick="goPage(${currentPage+1})" ${currentPage===total?'disabled':''} class="pg-btn"><i class="fas fa-chevron-right"></i></button>`;
+    wrap.innerHTML = html;
+}
+
+function goPage(n) {
+    currentPage = n;
+    renderPage();
+}
+
+let sortDir = {};
+function sortTable(col) {
+    const tbody = document.getElementById('tableBody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    sortDir[col] = !sortDir[col];
+    rows.sort((a, b) => {
+        const va = a.cells[col].textContent.trim();
+        const vb = b.cells[col].textContent.trim();
+        return sortDir[col] ? va.localeCompare(vb) : vb.localeCompare(va);
+    });
+    rows.forEach(r => tbody.appendChild(r));
+    filteredRows = getAllRows();
+    renderPage();
+}
+
+// Init
+filteredRows = getAllRows();
+renderPage();
+</script>
+{% endblock %}

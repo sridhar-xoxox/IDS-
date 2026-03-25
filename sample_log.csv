@@ -1,0 +1,4 @@
+Flow_Duration,Tot_Fwd_Pkts,Tot_Bwd_Pkts,Fwd_Pkt_Len_Mean,Bwd_Pkt_Len_Mean,Flow_Byts/s,Flow_Pkts/s,Flow_IAT_Mean,Fwd_Header_Len,Bwd_Header_Len,Flow_Flags,Protocol
+0.15,100,10,50.0,5.0,1000.0,10.0,0.001,32,32,0,6
+0.25,200,20,60.0,10.0,2000.0,20.0,0.002,32,32,1,17
+0.35,300,30,70.0,15.0,3000.0,30.0,0.003,32,32,0,6

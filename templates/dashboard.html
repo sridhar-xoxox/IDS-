@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Net IDS{% endblock %}
+{% block page_title %}<i class="fas fa-gauge-high"></i> Security Dashboard{% endblock %}
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-grid">
+
+    <!-- KPI row -->
+    <div class="kpi-row">
+        <div class="kpi-card kpi-total">
+            <div class="kpi-icon"><i class="fas fa-network-wired"></i></div>
+            <div class="kpi-body">
+                <span class="kpi-label">Total Analyses</span>
+                <span class="kpi-value" data-count="{{ total }}">{{ total }}</span>
+            </div>
+            <div class="kpi-trend"><i class="fas fa-arrow-trend-up"></i></div>
+        </div>
+        <div class="kpi-card kpi-threats">
+            <div class="kpi-icon"><i class="fas fa-triangle-exclamation"></i></div>
+            <div class="kpi-body">
+                <span class="kpi-label">Threats Detected</span>
+                <span class="kpi-value" data-count="{{ attacks }}">{{ attacks }}</span>
+            </div>
+            <div class="kpi-trend kpi-trend-bad"><i class="fas fa-radiation"></i></div>
+        </div>
+        <div class="kpi-card kpi-normal">
+            <div class="kpi-icon"><i class="fas fa-circle-check"></i></div>
+            <div class="kpi-body">
+                <span class="kpi-label">Benign Traffic</span>
+                <span class="kpi-value" data-count="{{ normal }}">{{ normal }}</span>
+            </div>
+            <div class="kpi-trend kpi-trend-good"><i class="fas fa-shield-check"></i></div>
+        </div>
+        <div class="kpi-card kpi-top">
+            <div class="kpi-icon"><i class="fas fa-fire-flame-curved"></i></div>
+            <div class="kpi-body">
+                <span class="kpi-label">Top Threat</span>
+                <span class="kpi-value kpi-text">{{ top_attack }}</span>
+            </div>
+            <div class="kpi-trend"><i class="fas fa-crosshairs"></i></div>
+        </div>
+    </div>
+
+    <!-- Detection method cards -->
+    <div class="method-row">
+        <div class="method-card method-sig">
+            <i class="fas fa-fingerprint"></i>
+            <div>
+                <span class="method-val">{{ sig_count }}</span>
+                <span class="method-label">Signature Detections</span>
+            </div>
+        </div>
+        <div class="method-card method-ml">
+            <i class="fas fa-brain"></i>
+            <div>
+                <span class="method-val">{{ ml_count }}</span>
+                <span class="method-label">ML Detections</span>
+            </div>
+        </div>
+        <div class="method-card method-acc">
+            <i class="fas fa-bullseye"></i>
+            <div>
+                <span class="method-val">99.2%</span>
+                <span class="method-label">Model Accuracy</span>
+            </div>
+        </div>
+        <div class="method-card method-feat">
+            <i class="fas fa-list-check"></i>
+            <div>
+                <span class="method-val">12</span>
+                <span class="method-label">Input Features</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts row -->
+    <div class="charts-row">
+        <div class="chart-card chart-pie">
+            <div class="chart-header">
+                <h3><i class="fas fa-chart-pie"></i> Threat Distribution</h3>
+                <span class="chart-badge">Live</span>
+            </div>
+            {% if total > 0 %}
+            <div class="chart-container">
+                <canvas id="pieChart"></canvas>
+            </div>
+            {% else %}
+            <div class="chart-empty">
+                <i class="fas fa-chart-pie"></i>
+                <p>No data yet. Run your first analysis.</p>
+                <a href="{{ url_for('predict') }}" class="btn-sm-primary">Analyze Traffic</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="chart-card chart-bar">
+            <div class="chart-header">
+                <h3><i class="fas fa-chart-bar"></i> Traffic Breakdown</h3>
+                <span class="chart-badge">Per Category</span>
+            </div>
+            {% if total > 0 %}
+            <div class="chart-container">
+                <canvas id="barChart"></canvas>
+            </div>
+            {% else %}
+            <div class="chart-empty">
+                <i class="fas fa-chart-bar"></i>
+                <p>No data yet. Start analyzing network traffic.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recent activity -->
+    <div class="recent-card">
+        <div class="recent-header">
+            <h3><i class="fas fa-clock-rotate-left"></i> Recent Activity</h3>
+            <a href="{{ url_for('history') }}" class="btn-sm-ghost">View All <i class="fas fa-arrow-right"></i></a>
+        </div>
+        {% if recent %}
+        <div class="recent-table-wrap">
+            <table class="recent-table">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Prediction</th>
+                        <th>Method</th>
+                        <th>Severity</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in recent %}
+                    <tr>
+                        <td class="td-mono">{{ r.timestamp[:16] }}</td>
+                        <td>
+                            <span class="prediction-tag prediction-{{ r.severity }}">
+                                {{ r.prediction }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="method-tag {% if r.detection_method=='Signature' %}method-sig-tag{% else %}method-ml-tag{% endif %}">
+                                {% if r.detection_method == 'Signature' %}
+                                <i class="fas fa-fingerprint"></i>
+                                {% else %}
+                                <i class="fas fa-brain"></i>
+                                {% endif %}
+                                {{ r.detection_method }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="severity-dot severity-{{ r.severity }}"></span>
+                            {{ r.severity|capitalize }}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('download_pdf', pred_id=r.id) }}" class="btn-icon" title="Download PDF">
+                                <i class="fas fa-file-pdf"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-radar"></i>
+            <p>No predictions yet. <a href="{{ url_for('predict') }}">Analyze your first traffic flow</a></p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Quick analyze CTA -->
+    <div class="cta-card">
+        <div class="cta-left">
+            <h3>Ready to analyze network traffic?</h3>
+            <p>Enter flow features and get instant hybrid threat analysis with security recommendations.</p>
+        </div>
+        <a href="{{ url_for('predict') }}" class="btn-cta">
+            <i class="fas fa-radar"></i> Analyze Traffic Now
+        </a>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const LABELS = {{ chart_labels|safe }};
+const VALUES = {{ chart_values|safe }};
+
+const COLORS = {
+    'BENIGN':   '#22c55e',
+    'DoS':      '#ef4444',
+    'DDoS':     '#dc2626',
+    'PortScan': '#f59e0b',
+    'Botnet':   '#7c3aed',
+    'WebAttack':'#f97316',
+    'DoS Attack':'#ef4444',
+    'DDoS Attack':'#dc2626',
+    'Port Scan':'#f59e0b',
+    'Brute Force':'#f97316',
+    'Web Attack':'#f97316',
+    'SYN Flood':'#ea580c',
+    'UDP Flood':'#fb923c',
+    'Botnet Traffic':'#7c3aed',
+    'Slowloris':'#a16207',
+    'Data Exfiltration':'#b91c1c',
+};
+const DEFAULT_COLORS = ['#3b82f6','#8b5cf6','#ec4899','#14b8a6','#f59e0b','#ef4444'];
+const bgColors = LABELS.map((l,i) => COLORS[l] || DEFAULT_COLORS[i % DEFAULT_COLORS.length]);
+
+if (LABELS.length > 0) {
+    // Pie chart
+    const pieCtx = document.getElementById('pieChart');
+    if (pieCtx) {
+        new Chart(pieCtx, {
+            type: 'doughnut',
+            data: { labels: LABELS, datasets: [{ data: VALUES, backgroundColor: bgColors, borderWidth: 2, borderColor: '#fff', hoverBorderWidth: 3 }] },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { font: { family: 'DM Sans', size: 12 }, padding: 16, usePointStyle: true } },
+                    tooltip: { callbacks: { label: (c) => ` ${c.label}: ${c.raw} (${Math.round(c.raw/VALUES.reduce((a,b)=>a+b,0)*100)}%)` } }
+                },
+                cutout: '65%',
+            }
+        });
+    }
+
+    // Bar chart
+    const barCtx = document.getElementById('barChart');
+    if (barCtx) {
+        new Chart(barCtx, {
+            type: 'bar',
+            data: { labels: LABELS, datasets: [{ label: 'Detections', data: VALUES, backgroundColor: bgColors, borderRadius: 8, borderSkipped: false }] },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false }, ticks: { font: { family: 'DM Sans' } } },
+                    y: { grid: { color: '#f1f5f9' }, beginAtZero: true, ticks: { stepSize: 1, font: { family: 'DM Sans' } } }
+                }
+            }
+        });
+    }
+}
+
+// Count-up animation
+document.querySelectorAll('[data-count]').forEach(el => {
+    const target = parseInt(el.dataset.count);
+    if (target === 0) return;
+    let count = 0;
+    const step = Math.ceil(target / 40);
+    const iv = setInterval(() => {
+        count = Math.min(count + step, target);
+        el.textContent = count;
+        if (count >= target) clearInterval(iv);
+    }, 30);
+});
+</script>
+{% endblock %}

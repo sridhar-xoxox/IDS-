@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title %}Net IDS — Hybrid Intrusion Detection System{% endblock %}
+
+{% block auth_content %}
+<div class="landing">
+    <!-- Hero -->
+    <div class="landing-hero">
+        <div class="hero-bg-grid"></div>
+        <div class="hero-orb hero-orb-1"></div>
+        <div class="hero-orb hero-orb-2"></div>
+
+        <nav class="landing-nav">
+            <div class="landing-logo">
+                <i class="fas fa-shield-halved"></i>
+                <span>Net <strong>IDS</strong></span>
+            </div>
+            <div class="landing-nav-links">
+                <a href="{{ url_for('login') }}" class="btn-ghost">Sign In</a>
+                <a href="{{ url_for('signup') }}" class="btn-primary-sm">Get Started</a>
+            </div>
+        </nav>
+
+        <div class="hero-content">
+            <div class="hero-badge">
+                <span class="badge-dot"></span>
+                Final Year AI Project · Network Security
+            </div>
+            <h1 class="hero-title">
+                Hybrid Intrusion<br>
+                <span class="hero-accent">Detection System</span>
+            </h1>
+            <p class="hero-sub">
+                Combining <strong>Signature-Based Analysis</strong> and <strong>Machine Learning</strong>
+                to detect network intrusions in real-time with high accuracy and minimal false positives.
+            </p>
+            <div class="hero-actions">
+                <a href="{{ url_for('signup') }}" class="btn-hero-primary">
+                    <i class="fas fa-rocket"></i> Start Analyzing
+                </a>
+                <a href="{{ url_for('login') }}" class="btn-hero-ghost">
+                    <i class="fas fa-right-to-bracket"></i> Sign In
+                </a>
+            </div>
+            <div class="hero-stats">
+                <div class="h-stat"><span class="h-stat-val">99.2%</span><span class="h-stat-label">Accuracy</span></div>
+                <div class="h-stat-divider"></div>
+                <div class="h-stat"><span class="h-stat-val">6</span><span class="h-stat-label">Attack Classes</span></div>
+                <div class="h-stat-divider"></div>
+                <div class="h-stat"><span class="h-stat-val">10+</span><span class="h-stat-label">Signature Rules</span></div>
+                <div class="h-stat-divider"></div>
+                <div class="h-stat"><span class="h-stat-val">6,000</span><span class="h-stat-label">Training Samples</span></div>
+            </div>
+        </div>
+
+        <!-- Animated terminal card -->
+        <div class="hero-terminal">
+            <div class="terminal-header">
+                <span class="t-dot t-red"></span>
+                <span class="t-dot t-yellow"></span>
+                <span class="t-dot t-green"></span>
+                <span class="terminal-title">ids_engine.py</span>
+            </div>
+            <div class="terminal-body" id="terminalBody">
+                <div class="t-line"><span class="t-comment"># Hybrid IDS Engine</span></div>
+                <div class="t-line"><span class="t-kw">def</span> <span class="t-fn">analyze</span>(flow):</div>
+                <div class="t-line t-indent"><span class="t-comment"># Step 1: Signature check</span></div>
+                <div class="t-line t-indent">result = <span class="t-fn">sig_detect</span>(flow)</div>
+                <div class="t-line t-indent"><span class="t-kw">if</span> result: <span class="t-kw">return</span> result</div>
+                <div class="t-line t-indent"><span class="t-comment"># Step 2: ML model</span></div>
+                <div class="t-line t-indent">features = <span class="t-fn">scale</span>(flow)</div>
+                <div class="t-line t-indent"><span class="t-kw">return</span> model.<span class="t-fn">predict</span>(features)</div>
+                <div class="t-line t-blank"></div>
+                <div class="t-line"><span class="t-comment"># Output →</span> <span class="t-output" id="typeOutput"></span><span class="t-cursor">|</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features -->
+    <section class="landing-features">
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feat-icon feat-blue"><i class="fas fa-signature"></i></div>
+                <h3>Signature Detection</h3>
+                <p>10+ hand-crafted rules detecting DoS, DDoS, SYN Flood, UDP Flood, Port Scan, Brute Force, Slowloris, and more — instant zero-latency classification.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feat-icon feat-purple"><i class="fas fa-brain"></i></div>
+                <h3>ML-Powered Analysis</h3>
+                <p>Random Forest ensemble trained on 6,000 labeled samples across 6 attack classes, with confidence scoring and explainable predictions.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feat-icon feat-teal"><i class="fas fa-file-pdf"></i></div>
+                <h3>PDF Report Export</h3>
+                <p>Professional security reports with attack details, input features, detection rationale, and actionable remediation recommendations.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feat-icon feat-amber"><i class="fas fa-chart-pie"></i></div>
+                <h3>Analytics Dashboard</h3>
+                <p>Real-time threat distribution charts, prediction history, detection method breakdown, and trend analysis powered by Chart.js.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Attack types -->
+    <section class="landing-attacks">
+        <h2>Detectable Threat Categories</h2>
+        <div class="attacks-row">
+            <div class="attack-pill attack-red"><i class="fas fa-fire"></i> DoS</div>
+            <div class="attack-pill attack-red"><i class="fas fa-explosion"></i> DDoS</div>
+            <div class="attack-pill attack-amber"><i class="fas fa-magnifying-glass"></i> Port Scan</div>
+            <div class="attack-pill attack-orange"><i class="fas fa-lock-open"></i> Brute Force</div>
+            <div class="attack-pill attack-orange"><i class="fas fa-globe"></i> Web Attack</div>
+            <div class="attack-pill attack-red"><i class="fas fa-robot"></i> Botnet</div>
+            <div class="attack-pill attack-orange"><i class="fas fa-wave-square"></i> SYN Flood</div>
+            <div class="attack-pill attack-amber"><i class="fas fa-water"></i> UDP Flood</div>
+            <div class="attack-pill attack-amber"><i class="fas fa-snail"></i> Slowloris</div>
+            <div class="attack-pill attack-red"><i class="fas fa-upload"></i> Data Exfiltration</div>
+        </div>
+    </section>
+
+    <footer class="landing-footer">
+        <p>Net IDS · Final Year AI Project · Built with PYTHON</p>
+    </footer>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const outputs = ['DDoS Attack 🔴', 'BENIGN ✅', 'Port Scan 🟡', 'Botnet 🔴', 'SYN Flood 🟠', 'BENIGN ✅'];
+let oi = 0;
+function typeOutput() {
+    const el = document.getElementById('typeOutput');
+    if (!el) return;
+    const text = outputs[oi % outputs.length];
+    el.textContent = '';
+    let i = 0;
+    const iv = setInterval(() => {
+        el.textContent += text[i];
+        i++;
+        if (i >= text.length) { clearInterval(iv); setTimeout(typeOutput, 2200); oi++; }
+    }, 60);
+}
+typeOutput();
+</script>
+{% endblock %}

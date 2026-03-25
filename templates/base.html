@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Net IDS{% endblock %} — Hybrid Intrusion Detection</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block head %}{% endblock %}
+</head>
+<body>
+
+{% if session.user_id %}
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+        <div class="logo-icon"><i class="fas fa-shield-halved"></i></div>
+        <div class="logo-text">
+            <span class="logo-name">Net</span>
+            <span class="logo-sub">IDS Platform</span>
+        </div>
+    </div>
+
+    <nav class="sidebar-nav">
+        <div class="nav-group">
+            <span class="nav-label">MAIN</span>
+            <a href="{{ url_for('dashboard') }}" class="nav-item {% if request.endpoint=='dashboard' %}active{% endif %}">
+                <span class="nav-icon"><i class="fas fa-gauge-high"></i></span>
+                <span class="nav-text">Dashboard</span>
+                <span class="nav-badge" id="alert-badge" style="display:none">!</span>
+            </a>
+            <a href="{{ url_for('predict') }}" class="nav-item {% if request.endpoint=='predict' %}active{% endif %}">
+                <span class="nav-icon"><i class="fas fa-radar"></i></span>
+                <span class="nav-text">Analyze Traffic</span>
+            </a>
+            <a href="{{ url_for('history') }}" class="nav-item {% if request.endpoint=='history' %}active{% endif %}">
+                <span class="nav-icon"><i class="fas fa-clock-rotate-left"></i></span>
+                <span class="nav-text">Prediction History</span>
+            </a>
+        </div>
+        <div class="nav-group">
+            <span class="nav-label">SYSTEM</span>
+            <a href="#" class="nav-item" onclick="showInfo()">
+                <span class="nav-icon"><i class="fas fa-circle-info"></i></span>
+                <span class="nav-text">About System</span>
+            </a>
+        </div>
+    </nav>
+
+    <div class="sidebar-user">
+        <div class="user-avatar">{{ session.username[0]|upper }}</div>
+        <div class="user-info">
+            <span class="user-name">{{ session.username }}</span>
+            <span class="user-role">{{ session.role|capitalize }}</span>
+        </div>
+        <a href="{{ url_for('logout') }}" class="logout-btn" title="Logout">
+            <i class="fas fa-right-from-bracket"></i>
+        </a>
+    </div>
+</aside>
+
+<!-- Main -->
+<div class="main-wrapper">
+    <header class="topbar">
+        <button class="sidebar-toggle" id="sidebarToggle">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="topbar-title">{% block page_title %}{% endblock %}</div>
+        <div class="topbar-actions">
+            <div class="topbar-time" id="topbarTime"></div>
+            <div class="threat-indicator" id="threatIndicator">
+                <span class="threat-dot"></span>
+                <span>System Active</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flash-container">
+            {% for category, message in messages %}
+            <div class="flash flash-{{ category }}">
+                <i class="fas {% if category=='success' %}fa-circle-check{% elif category=='danger' %}fa-circle-xmark{% elif category=='warning' %}fa-triangle-exclamation{% else %}fa-circle-info{% endif %}"></i>
+                <span>{{ message }}</span>
+                <button onclick="this.parentElement.remove()" class="flash-close"><i class="fas fa-xmark"></i></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+</div>
+
+{% else %}
+<!-- Auth layout -->
+<div class="auth-layout">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-container auth-flash">
+        {% for category, message in messages %}
+        <div class="flash flash-{{ category }}">
+            <i class="fas {% if category=='success' %}fa-circle-check{% elif category=='danger' %}fa-circle-xmark{% else %}fa-circle-info{% endif %}"></i>
+            <span>{{ message }}</span>
+            <button onclick="this.parentElement.remove()" class="flash-close"><i class="fas fa-xmark"></i></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+    {% block auth_content %}{% endblock %}
+</div>
+{% endif %}
+
+<!-- Info Modal -->
+<div class="modal-overlay" id="infoModal" style="display:none">
+    <div class="modal-box">
+        <button class="modal-close" onclick="document.getElementById('infoModal').style.display='none'"><i class="fas fa-xmark"></i></button>
+        <div class="modal-icon"><i class="fas fa-shield-halved"></i></div>
+        <h2>Net Hybrid IDS</h2>
+        <p>Final Year AI Project — Hybrid Intrusion Detection System combining <strong>Signature-Based Rules</strong> (Snort-like) and <strong>Random Forest Machine Learning</strong> for real-time network threat analysis.</p>
+        <div class="modal-tags">
+            <span>Random Forest</span><span>Signature Rules</span><span>Flask</span>
+            <span>Network Security</span><span>Python</span><span>SQLite</span>
+        </div>
+        <p class="modal-version">v1.0 · 6 Attack Classes · 12 Features · 6000 Training Samples</p>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

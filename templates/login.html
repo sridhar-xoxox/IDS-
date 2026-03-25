@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Sign In — Net IDS{% endblock %}
+
+{% block auth_content %}
+<div class="auth-split">
+    <!-- Left panel -->
+    <div class="auth-panel-left">
+        <div class="auth-panel-bg"></div>
+        <a href="{{ url_for('index') }}" class="auth-logo">
+            <i class="fas fa-shield-halved"></i>
+            <span>Net <strong>IDS</strong></span>
+        </a>
+        <div class="auth-left-content">
+            <h2>Welcome back,<br>Security Analyst</h2>
+            <p>Access your hybrid intrusion detection dashboard and protect your network infrastructure.</p>
+            <div class="auth-features">
+                <div class="af-item"><i class="fas fa-check-circle"></i> Real-time threat analysis</div>
+                <div class="af-item"><i class="fas fa-check-circle"></i> Signature + ML hybrid engine</div>
+                <div class="af-item"><i class="fas fa-check-circle"></i> Detailed PDF security reports</div>
+            </div>
+        </div>
+        <div class="auth-orb-1"></div>
+        <div class="auth-orb-2"></div>
+    </div>
+
+    <!-- Right panel: form -->
+    <div class="auth-panel-right">
+        <div class="auth-card">
+            <div class="auth-card-header">
+                <div class="auth-card-icon"><i class="fas fa-right-to-bracket"></i></div>
+                <h1>Sign In</h1>
+                <p>Enter your credentials to continue</p>
+            </div>
+
+            <form method="POST" action="{{ url_for('login') }}" class="auth-form">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" id="username" name="username" placeholder="Enter username" required autocomplete="username">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="password" name="password" placeholder="Enter password" required autocomplete="current-password">
+                        <button type="button" class="input-toggle" onclick="togglePwd('password',this)">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="btn-submit">
+                    <i class="fas fa-shield-check"></i> Sign In Securely
+                </button>
+            </form>
+
+            <p class="auth-switch">Don't have an account? <a href="{{ url_for('signup') }}">Create one</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function togglePwd(id, btn) {
+    const inp = document.getElementById(id);
+    const icon = btn.querySelector('i');
+    if (inp.type === 'password') { inp.type = 'text'; icon.className = 'fas fa-eye-slash'; }
+    else { inp.type = 'password'; icon.className = 'fas fa-eye'; }
+}
+</script>
+{% endblock %}

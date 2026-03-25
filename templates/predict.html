@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+{% block title %}Analyze Traffic — Net IDS{% endblock %}
+{% block page_title %}<i class="fas fa-radar"></i> Traffic Analysis{% endblock %}
+
+{% block content %}
+<div class="predict-layout">
+
+    <!-- Info panel -->
+    <div class="predict-info">
+        <div class="info-card">
+            <h3><i class="fas fa-circle-info"></i> How It Works</h3>
+            <div class="how-step">
+                <div class="how-num">1</div>
+                <div>
+                    <strong>Signature Check</strong>
+                    <p>Your traffic is first checked against 10+ built-in threat signature rules (SID-1001 to SID-1010).</p>
+                </div>
+            </div>
+            <div class="how-step">
+                <div class="how-num">2</div>
+                <div>
+                    <strong>ML Analysis</strong>
+                    <p>If no rule matches, a Random Forest model analyzes 12 flow features to classify the traffic.</p>
+                </div>
+            </div>
+            <div class="how-step">
+                <div class="how-num">3</div>
+                <div>
+                    <strong>Result + Report</strong>
+                    <p>Instant classification with confidence score, recommendations, and PDF export.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-card quick-samples">
+            <h3><i class="fas fa-bolt"></i> Quick Load Samples</h3>
+            <p>Load a pre-filled attack sample to test the system:</p>
+            <div class="sample-btns">
+                <button class="sample-btn" onclick="loadSample('dos')"><i class="fas fa-fire"></i> DoS</button>
+                <button class="sample-btn" onclick="loadSample('ddos')"><i class="fas fa-explosion"></i> DDoS</button>
+                <button class="sample-btn" onclick="loadSample('portscan')"><i class="fas fa-magnifying-glass"></i> Port Scan</button>
+                <button class="sample-btn" onclick="loadSample('bruteforce')"><i class="fas fa-lock-open"></i> Brute Force</button>
+                <button class="sample-btn" onclick="loadSample('webapp')"><i class="fas fa-globe"></i> Web Attack</button>
+                <button class="sample-btn" onclick="loadSample('benign')"><i class="fas fa-check"></i> Benign</button>
+                <button class="sample-btn" onclick="loadSample('synflood')"><i class="fas fa-wave-square"></i> SYN Flood</button>
+                <button class="sample-btn" onclick="loadSample('udpflood')"><i class="fas fa-water"></i> UDP Flood</button>
+            </div>
+        </div>
+
+        <div class="info-card sig-rules">
+            <h3><i class="fas fa-fingerprint"></i> Active Signature Rules</h3>
+            <div class="rule-list">
+                <div class="rule-item"><span class="rule-sid">SID-1001</span> DoS Detection</div>
+                <div class="rule-item"><span class="rule-sid">SID-1002</span> DDoS Detection</div>
+                <div class="rule-item"><span class="rule-sid">SID-1003</span> Port Scan</div>
+                <div class="rule-item"><span class="rule-sid">SID-1004</span> Brute Force</div>
+                <div class="rule-item"><span class="rule-sid">SID-1005</span> Web Attack</div>
+                <div class="rule-item"><span class="rule-sid">SID-1006</span> Data Exfiltration</div>
+                <div class="rule-item"><span class="rule-sid">SID-1007</span> Slowloris</div>
+                <div class="rule-item"><span class="rule-sid">SID-1008</span> SYN Flood</div>
+                <div class="rule-item"><span class="rule-sid">SID-1009</span> UDP Flood</div>
+                <div class="rule-item"><span class="rule-sid">SID-1010</span> Botnet Traffic</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="predict-form-wrap">
+        <div class="predict-form-card">
+            <div class="pf-header">
+                <h2><i class="fas fa-sliders"></i> Network Flow Features</h2>
+                <p>Enter the 12 flow parameters from your network traffic capture</p>
+                <div class="pf-header-actions">
+                    <button type="button" id="captureBtn" onclick="captureAndFill()" class="btn-capture">
+                        <i class="fas fa-satellite-dish"></i>
+                        <span id="captureBtnText">Capture Live Traffic</span>
+                    </button>
+                    <button type="button" onclick="clearForm()" class="btn-ghost-sm"><i class="fas fa-eraser"></i> Clear</button>
+                </div>
+            </div>
+
+            <form method="POST" action="{{ url_for('predict') }}" id="predictForm">
+                <div class="features-grid">
+                    <!-- Row 1 -->
+                    <div class="feat-group">
+                        <label>Flow Duration <span class="feat-unit">(seconds)</span></label>
+                        <div class="feat-input-wrap">
+                            <input type="number" name="Flow_Duration" id="Flow_Duration" step="any" placeholder="e.g. 0.027" required class="feat-input">
+                            <span class="feat-hint">Total flow duration in seconds</span>
+                        </div>
+                    </div>
+                    <div class="feat-group">
+                        <label>Total Fwd Packets</label>
+                        <div class="feat-input-wrap">
+                            <input type="number" name="Tot_Fwd_Pkts" id="Tot_Fwd_Pkts" step="any" placeholder="e.g. 2198" required class="feat-input">
+                            <span class="feat-hint">Total packets in forward direction</span>
+                        </div>
+                    </div>
+                    <div class="feat-group">
+                        <label>Total Bwd Packets</label>
+                        <div class="feat-input-wrap">
+                            <input type="number" name="Tot_Bwd_Pkts" id="Tot_Bwd_Pkts" step="any" placeholder="e.g. 1" required class="feat-input">
+                            <span class="feat-hint">Total packets in backward direction</span>
+                        </div>
+                    </div>
+                    <div class="feat-group">
+                        <label>Fwd Pkt Length Mean <span class="feat-unit">(bytes)</span></label>
+                        <div class="feat-input-wrap">
+                            <input type="number" name="Fwd_Pkt_Len_Mean" id="Fwd_Pkt_Len_Mean" step="any" placeholder="e.g. 417.01" required class="feat-input">
+                            <span class="feat-hint">Mean size of forward packets</span>
+                        </div>
+                    </div>
+                    <div class="feat-group">
+                        <label>Bwd Pkt Length Mean <span class="feat-unit">(bytes)</span></label>
+                        <div class="feat-input-wrap">
+                            <input type="number" name="Bwd_Pkt_Len_Mean" id="Bwd_Pkt_Len_Mean" step="any" placeholder="e.g. 458503.85" required class="feat-input">
+                            <span class="feat-hint">Mean size of backward packets</span>
+                        </div>
+                    </div>
+                    <div class="feat-group">
+                        <label>Flow Bytes/s</label>
+                        <div class="feat-input-wrap">
+                            <input type="number" name="Flow_Byts_s" id="Flow_Byts_s" step="any" placeholder="e.g. 917007.70" required class="feat-input">
+                            <span class="feat-hint">Number of bytes per second</span>
+                        </div>
+                    </div>
+                    <div class="feat-group">
+                        <label>Flow Packets/s</label>
+                        <div class="feat-input-wrap">
+                            <input type="number" name="Flow_Pkts_s" id="Flow_Pkts_s" step="any" placeholder="e.g. 17660.16" required class="feat-input">
+                            <span class="feat-hint">Number of packets per second</span>
+                        </div>
+                    </div>
+                    <div class="feat-group">
+                        <label>Flow IAT Mean <span class="feat-unit">(seconds)</span></label>
+                        <div class="feat-input-wrap">
+                            <input type="number" name="Flow_IAT_Mean" id="Flow_IAT_Mean" step="any" placeholder="e.g. 0.000012" required class="feat-input">
+                            <span class="feat-hint">Mean inter-arrival time</span>
+                        </div>
+                    </div>
+                    <div class="feat-group">
+                        <label>Fwd Header Length</label>
+                        <div class="feat-input-wrap">
+                            <input type="number" name="Fwd_Header_Len" id="Fwd_Header_Len" step="any" placeholder="e.g. 23" required class="feat-input">
+                            <span class="feat-hint">Total bytes in forward headers</span>
+                        </div>
+                    </div>
+                    <div class="feat-group">
+                        <label>Bwd Header Length</label>
+                        <div class="feat-input-wrap">
+                            <input type="number" name="Bwd_Header_Len" id="Bwd_Header_Len" step="any" placeholder="e.g. 41" required class="feat-input">
+                            <span class="feat-hint">Total bytes in backward headers</span>
+                        </div>
+                    </div>
+                    <div class="feat-group">
+                        <label>Flow Flags</label>
+                        <div class="feat-input-wrap">
+                            <select name="Flow_Flags" id="Flow_Flags" class="feat-input feat-select">
+                                <option value="0">0 — No Flags</option>
+                                <option value="1">1 — FIN</option>
+                                <option value="2">2 — SYN</option>
+                                <option value="3">3 — RST</option>
+                                <option value="4">4 — PSH+ACK</option>
+                                <option value="5">5 — ACK</option>
+                                <option value="6">6 — URG</option>
+                            </select>
+                            <span class="feat-hint">TCP flag combination encoded</span>
+                        </div>
+                    </div>
+                    <div class="feat-group">
+                        <label>Protocol</label>
+                        <div class="feat-input-wrap">
+                            <select name="Protocol" id="Protocol" class="feat-input feat-select">
+                                <option value="6">6 — TCP</option>
+                                <option value="17">17 — UDP</option>
+                                <option value="1">1 — ICMP</option>
+                                <option value="0">0 — Other</option>
+                            </select>
+                            <span class="feat-hint">IP protocol number</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pf-actions">
+                    <button type="submit" class="btn-analyze" id="analyzeBtn">
+                        <span class="btn-analyze-inner">
+                            <i class="fas fa-shield-halved"></i>
+                            <span>Run Hybrid Detection</span>
+                        </span>
+                        <span class="btn-analyze-loading" style="display:none">
+                            <i class="fas fa-circle-notch fa-spin"></i>
+                            <span>Analyzing...</span>
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const SAMPLES = {
+    dos:        { Flow_Duration:0.027, Tot_Fwd_Pkts:2198, Tot_Bwd_Pkts:1, Fwd_Pkt_Len_Mean:417.01, Bwd_Pkt_Len_Mean:458503.85, Flow_Byts_s:917007.70, Flow_Pkts_s:17660.16, Flow_IAT_Mean:0.000012, Fwd_Header_Len:23, Bwd_Header_Len:41, Flow_Flags:4, Protocol:17 },
+    ddos:       { Flow_Duration:0.05, Tot_Fwd_Pkts:500, Tot_Bwd_Pkts:2, Fwd_Pkt_Len_Mean:120, Bwd_Pkt_Len_Mean:250000, Flow_Byts_s:350000, Flow_Pkts_s:3500, Flow_IAT_Mean:0.000014, Fwd_Header_Len:20, Bwd_Header_Len:30, Flow_Flags:4, Protocol:17 },
+    portscan:   { Flow_Duration:0.2, Tot_Fwd_Pkts:10, Tot_Bwd_Pkts:0, Fwd_Pkt_Len_Mean:40, Bwd_Pkt_Len_Mean:0, Flow_Byts_s:2000, Flow_Pkts_s:50, Flow_IAT_Mean:0.02, Fwd_Header_Len:20, Bwd_Header_Len:0, Flow_Flags:2, Protocol:6 },
+    bruteforce: { Flow_Duration:0.5, Tot_Fwd_Pkts:450, Tot_Bwd_Pkts:420, Fwd_Pkt_Len_Mean:80, Bwd_Pkt_Len_Mean:90, Flow_Byts_s:72000, Flow_Pkts_s:1740, Flow_IAT_Mean:0.00057, Fwd_Header_Len:25, Bwd_Header_Len:25, Flow_Flags:5, Protocol:6 },
+    webapp:     { Flow_Duration:1.2, Tot_Fwd_Pkts:30, Tot_Bwd_Pkts:20, Fwd_Pkt_Len_Mean:620, Bwd_Pkt_Len_Mean:800, Flow_Byts_s:21000, Flow_Pkts_s:41.6, Flow_IAT_Mean:0.024, Fwd_Header_Len:40, Bwd_Header_Len:40, Flow_Flags:5, Protocol:6 },
+    benign:     { Flow_Duration:0.94, Tot_Fwd_Pkts:41, Tot_Bwd_Pkts:31, Fwd_Pkt_Len_Mean:34.93, Bwd_Pkt_Len_Mean:45.84, Flow_Byts_s:1467, Flow_Pkts_s:49.2, Flow_IAT_Mean:0.0128, Fwd_Header_Len:27, Bwd_Header_Len:33, Flow_Flags:0, Protocol:17 },
+    synflood:   { Flow_Duration:0.1, Tot_Fwd_Pkts:200, Tot_Bwd_Pkts:0, Fwd_Pkt_Len_Mean:60, Bwd_Pkt_Len_Mean:0, Flow_Byts_s:90000, Flow_Pkts_s:2000, Flow_IAT_Mean:0.00005, Fwd_Header_Len:20, Bwd_Header_Len:0, Flow_Flags:2, Protocol:6 },
+    udpflood:   { Flow_Duration:0.2, Tot_Fwd_Pkts:300, Tot_Bwd_Pkts:0, Fwd_Pkt_Len_Mean:100, Bwd_Pkt_Len_Mean:0, Flow_Byts_s:150000, Flow_Pkts_s:2500, Flow_IAT_Mean:0.00008, Fwd_Header_Len:8, Bwd_Header_Len:0, Flow_Flags:0, Protocol:17 },
+};
+
+function loadSample(key) {
+    const s = SAMPLES[key];
+    if (!s) return;
+    Object.entries(s).forEach(([k, v]) => {
+        const el = document.getElementById(k);
+        if (el) el.value = v;
+    });
+    // Scroll to form
+    document.getElementById('predictForm').scrollIntoView({ behavior: 'smooth' });
+}
+
+function clearForm() {
+    document.getElementById('predictForm').reset();
+}
+
+async function captureAndFill() {
+    const btn   = document.getElementById('captureBtn');
+    const label = document.getElementById('captureBtnText');
+
+    btn.disabled = true;
+    btn.classList.add('capturing');
+
+    // 3-second countdown
+    let secs = 3;
+    label.textContent = `Capturing... ${secs}s`;
+    const tick = setInterval(() => {
+        secs--;
+        label.textContent = secs > 0 ? `Capturing... ${secs}s` : 'Processing...';
+        if (secs <= 0) clearInterval(tick);
+    }, 1000);
+
+    try {
+        const res  = await fetch('/api/capture_live');
+        const data = await res.json();
+        clearInterval(tick);
+
+        if (data.error) {
+            alert('\u26a0\ufe0f Capture failed: ' + data.error);
+        } else {
+            // Map the 12 features -> form fields
+            const FIELDS = [
+                'Flow_Duration','Tot_Fwd_Pkts','Tot_Bwd_Pkts',
+                'Fwd_Pkt_Len_Mean','Bwd_Pkt_Len_Mean','Flow_Byts_s',
+                'Flow_Pkts_s','Flow_IAT_Mean','Fwd_Header_Len',
+                'Bwd_Header_Len','Flow_Flags','Protocol'
+            ];
+            FIELDS.forEach(k => {
+                const el = document.getElementById(k);
+                if (el && data[k] !== undefined) el.value = data[k];
+            });
+            label.textContent = `\u2713 ${data.packets_captured} pkts captured`;
+            btn.classList.remove('capturing');
+            btn.classList.add('captured');
+            setTimeout(() => {
+                label.textContent = 'Capture Live Traffic';
+                btn.classList.remove('captured');
+                btn.disabled = false;
+            }, 3000);
+            document.getElementById('predictForm').scrollIntoView({ behavior: 'smooth' });
+            return;
+        }
+    } catch(e) {
+        clearInterval(tick);
+        alert('\u26a0\ufe0f Network error during capture.');
+    }
+
+    label.textContent = 'Capture Live Traffic';
+    btn.classList.remove('capturing');
+    btn.disabled = false;
+}
+
+document.getElementById('predictForm').addEventListener('submit', function() {
+    const btn = document.getElementById('analyzeBtn');
+    btn.querySelector('.btn-analyze-inner').style.display = 'none';
+    btn.querySelector('.btn-analyze-loading').style.display = 'flex';
+    btn.disabled = true;
+});
+</script>
+{% endblock %}
